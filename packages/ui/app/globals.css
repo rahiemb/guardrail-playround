@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════ */
+
+:root {
+  /* Brand palette */
+  --color-bg:           #0a0b0f;
+  --color-surface:      #111318;
+  --color-surface-2:    #1a1d26;
+  --color-border:       #252836;
+  --color-border-subtle:#1e2030;
+
+  /* Text */
+  --color-text:         #e8eaf0;
+  --color-text-muted:   #7a7f94;
+  --color-text-dim:     #4a4f64;
+
+  /* Accent */
+  --color-accent:       #6366f1;
+  --color-accent-hover: #4f52d4;
+  --color-accent-glow:  rgba(99, 102, 241, 0.18);
+
+  /* Node colors */
+  --color-node-input:   #10b981;
+  --color-node-llm:     #6366f1;
+  --color-node-output:  #10b981;
+  --color-node-guard:   #f59e0b;
+
+  /* Semantic */
+  --color-success:      #10b981;
+  --color-warning:      #f59e0b;
+  --color-error:        #ef4444;
+  --color-info:         #3b82f6;
+
+  /* Glow effects */
+  --glow-success:       0 0 20px rgba(16, 185, 129, 0.25);
+  --glow-error:         0 0 20px rgba(239, 68, 68, 0.25);
+  --glow-accent:        0 0 24px rgba(99, 102, 241, 0.3);
+
+  /* Layout */
+  --sidebar-width:      260px;
+  --inspector-width:    300px;
+  --header-height:      52px;
+
+  /* Typography */
+  --font-sans:          'Inter', system-ui, sans-serif;
+  --font-mono:          'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Radius */
+  --radius-sm:          6px;
+  --radius-md:          10px;
+  --radius-lg:          14px;
+  --radius-xl:          20px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#__next, main {
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCROLLBARS
+═══════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+}
+
+/* ═══════════════════════════════════════════════════════
+   REACT FLOW OVERRIDES
+═══════════════════════════════════════════════════════ */
+
+.react-flow__background {
+  background: var(--color-bg) !important;
+}
+
+.react-flow__controls {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  transition: color 0.15s, background 0.15s !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--color-surface-2) !important;
+  color: var(--color-text) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+}
+
+.react-flow__minimap {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden;
+}
+
+.react-flow__edge-path {
+  stroke: var(--color-border) !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--color-accent) !important;
+}
+
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border: 2px solid var(--color-bg) !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════ */
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: var(--glow-accent); }
+  50%       { opacity: 0.85; box-shadow: none; }
+}
+
+@keyframes flow-dash {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease forwards;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
