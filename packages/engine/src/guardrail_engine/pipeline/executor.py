@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from guardrail_engine.pipeline.models import (
     Guardrail,

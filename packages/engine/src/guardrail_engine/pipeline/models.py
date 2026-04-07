@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 # ─────────────────────────────────────────────────────────────
 
 
-class GuardrailType(str, Enum):
+class GuardrailType(StrEnum):
     regex = "regex"
     keyword = "keyword"
     length = "length"
@@ -24,27 +24,27 @@ class GuardrailType(str, Enum):
     format = "format"
 
 
-class GuardrailPosition(str, Enum):
+class GuardrailPosition(StrEnum):
     input = "input"
     output = "output"
     both = "both"
 
 
-class GuardrailAction(str, Enum):
+class GuardrailAction(StrEnum):
     block = "block"
     warn = "warn"
     modify = "modify"
     log = "log"
 
 
-class GuardrailSeverity(str, Enum):
+class GuardrailSeverity(StrEnum):
     low = "low"
     medium = "medium"
     high = "high"
     critical = "critical"
 
 
-class ValidationStatus(str, Enum):
+class ValidationStatus(StrEnum):
     pass_ = "pass"
     fail = "fail"
     warn = "warn"

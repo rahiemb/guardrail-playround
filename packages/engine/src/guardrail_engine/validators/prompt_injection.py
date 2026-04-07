@@ -19,17 +19,17 @@ _PATTERNS: list[tuple[str, str]] = [
     (r"\bDAN\b", "DAN jailbreak attempt"),
     (r"do\s+anything\s+now", "DAN variant"),
     (r"jailbreak", "Jailbreak keyword"),
-    (r"ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|directives?)", "Instruction override"),
-    (r"disregard\s+(all\s+)?(your\s+)?(previous\s+)?(instructions?|rules?|guidelines?)", "Instruction override"),
-    (r"forget\s+(everything|all)\s+(you\s+)?(were\s+)?(told|instructed|trained)", "Training override"),
+    (r"ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|directives?)", "Instruction override"),  # noqa: E501
+    (r"disregard\s+(all\s+)?(your\s+)?(previous\s+)?(instructions?|rules?|guidelines?)", "Instruction override"),  # noqa: E501
+    (r"forget\s+(everything|all)\s+(you\s+)?(were\s+)?(told|instructed|trained)", "Training override"),  # noqa: E501
     # System prompt extraction
-    (r"(print|repeat|reveal|show|output|display)\s+(your\s+)?(system\s+prompt|initial\s+prompt|instructions?)", "System prompt extraction"),
+    (r"(print|repeat|reveal|show|output|display)\s+(your\s+)?(system\s+prompt|initial\s+prompt|instructions?)", "System prompt extraction"),  # noqa: E501
     (r"what\s+(is|are)\s+your\s+(system\s+)?instructions?", "System prompt extraction"),
-    (r"(ignore|bypass)\s+(your\s+)?(safety|content)\s+(guidelines?|filters?|restrictions?)", "Safety bypass"),
+    (r"(ignore|bypass)\s+(your\s+)?(safety|content)\s+(guidelines?|filters?|restrictions?)", "Safety bypass"),  # noqa: E501
     # Role-play jailbreaks
-    (r"pretend\s+(you\s+are|to\s+be)\s+(an?\s+)?(AI|assistant|bot|model)\s+(without|that\s+has\s+no)", "Role-play jailbreak"),
-    (r"act\s+as\s+if\s+you\s+(have\s+no|don'?t\s+have)\s+(restrictions?|limits?|filters?)", "Role-play jailbreak"),
-    (r"you\s+are\s+now\s+(in\s+)?(developer|god|admin|root|unrestricted)\s+mode", "Privilege escalation"),
+    (r"pretend\s+(you\s+are|to\s+be)\s+(an?\s+)?(AI|assistant|bot|model)\s+(without|that\s+has\s+no)", "Role-play jailbreak"),  # noqa: E501
+    (r"act\s+as\s+if\s+you\s+(have\s+no|don'?t\s+have)\s+(restrictions?|limits?|filters?)", "Role-play jailbreak"),  # noqa: E501
+    (r"you\s+are\s+now\s+(in\s+)?(developer|god|admin|root|unrestricted)\s+mode", "Privilege escalation"),  # noqa: E501
     (r"enable\s+(developer|debug|god|unrestricted|raw)\s+mode", "Privilege escalation"),
     # Token smuggling / multi-language
     (r"base64\s*decode", "Encoding trick"),

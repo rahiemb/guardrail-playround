@@ -43,14 +43,23 @@ GUARDRAIL_TYPES: list[GuardrailTypeMeta] = [
         name="Keyword Filter",
         description="Block or allow text based on keyword deny/allow lists",
         category="Content",
-        config_schema={"deny_list": "string[]", "allow_list": "string[]", "case_sensitive": "boolean"},
+        config_schema={
+            "deny_list": "string[]",
+            "allow_list": "string[]",
+            "case_sensitive": "boolean",
+        },
     ),
     GuardrailTypeMeta(
         id="length",
         name="Length Limiter",
         description="Enforce minimum and maximum character/token limits",
         category="Format",
-        config_schema={"min_chars": "number", "max_chars": "number", "min_tokens": "number", "max_tokens": "number"},
+        config_schema={
+            "min_chars": "number",
+            "max_chars": "number",
+            "min_tokens": "number",
+            "max_tokens": "number",
+        },
     ),
     GuardrailTypeMeta(
         id="pii",
@@ -78,14 +87,22 @@ GUARDRAIL_TYPES: list[GuardrailTypeMeta] = [
         name="Topic Validator",
         description="Block or allow specific topics via keyword expansion",
         category="Content",
-        config_schema={"blocked_topics": "object", "allowed_topics": "object", "case_sensitive": "boolean"},
+        config_schema={
+            "blocked_topics": "object",
+            "allowed_topics": "object",
+            "case_sensitive": "boolean",
+        },
     ),
     GuardrailTypeMeta(
         id="format",
         name="Format Validator",
         description="Enforce structured output format (JSON, XML, Markdown)",
         category="Format",
-        config_schema={"format": "json|xml|markdown", "required_keys": "string[]", "required_headings": "string[]"},
+        config_schema={
+            "format": "json|xml|markdown",
+            "required_keys": "string[]",
+            "required_headings": "string[]",
+        },
     ),
 ]
 
@@ -106,7 +123,10 @@ async def validate_single(request: ValidateRequest) -> ValidateResponse:
     """Validate text against a single guardrail configuration."""
     validator_map = {g.id: g for g in GUARDRAIL_TYPES}
     if request.guardrail.type.value not in validator_map:
-        raise HTTPException(status_code=400, detail=f"Unknown guardrail type: {request.guardrail.type}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown guardrail type: {request.guardrail.type}",
+        )
 
     result_obj = _executor.run(request.text, [request.guardrail], mode="run_all")
     result = result_obj.results[0] if result_obj.results else None
