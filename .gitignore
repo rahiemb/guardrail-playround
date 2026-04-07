@@ -5,6 +5,7 @@ node_modules/
 # Next.js
 packages/ui/.next/
 packages/ui/out/
+packages/ui/.git_backup/
 
 # Python
 __pycache__/
