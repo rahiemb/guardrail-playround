@@ -7,7 +7,7 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from guardrail_engine.pipeline.executor import PipelineExecutor
-from guardrail_engine.pipeline.models import PipelineRunRequest
+from guardrail_engine.pipeline.models import EndToEndRunRequest, PipelineRunRequest
 
 ws_router = APIRouter()
 _executor = PipelineExecutor()
@@ -29,6 +29,28 @@ async def pipeline_stream(websocket: WebSocket) -> None:
         async for event in _executor.stream(
             request.text, request.guardrails, request.mode
         ):
+            await websocket.send_text(event.model_dump_json())
+
+        await websocket.send_text(json.dumps({"done": True}))
+    except WebSocketDisconnect:
+        pass
+    except Exception as exc:  # noqa: BLE001
+        await websocket.send_text(json.dumps({"error": str(exc)}))
+        await websocket.close()
+
+
+@ws_router.websocket("/pipeline/stream_full")
+async def pipeline_stream_full(websocket: WebSocket) -> None:
+    """Stream full end-to-end pipeline execution events in real time.
+
+    Expects a single JSON message matching EndToEndRunRequest schema.
+    """
+    await websocket.accept()
+    try:
+        raw = await websocket.receive_text()
+        request = EndToEndRunRequest.model_validate_json(raw)
+
+        async for event in _executor.stream_end_to_end(request):
             await websocket.send_text(event.model_dump_json())
 
         await websocket.send_text(json.dumps({"done": True}))

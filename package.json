@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --names \"UI,ENGINE\" --prefix-colors \"cyan,yellow\" \"pnpm --filter ui dev\" \"pnpm --filter ui exec -- sh -c 'cd ../../packages/engine && python -m uvicorn guardrail_engine.main:app --reload --port 8000'\"",
+    "dev": "concurrently --names \"UI,ENGINE\" --prefix-colors \"cyan,yellow\" \"pnpm dev:ui\" \"pnpm dev:engine\"",
     "dev:ui": "pnpm --filter ui dev",
     "dev:engine": "cd packages/engine && python -m uvicorn guardrail_engine.main:app --reload --port 8000",
     "build": "pnpm --filter ui build",
@@ -13,6 +13,6 @@
     "test:engine": "cd packages/engine && python -m pytest"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "9.1.2"
   }
 }

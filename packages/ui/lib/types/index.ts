@@ -51,11 +51,18 @@ export interface LLMNodeData {
   label: string
   provider: string
   model: string
+  api_key?: string
+  max_tokens?: number
+  temperature?: number
+  status?: 'idle' | 'generating' | 'success' | 'fail'
+  content?: string
+  error?: string
   [key: string]: unknown
 }
 
 export interface OutputNodeData {
   label: string
+  content?: string
   [key: string]: unknown
 }
 
@@ -111,7 +118,45 @@ export interface PipelineRunResult {
 export interface PipelineStageEvent {
   stage: number
   guardrail_id: string
-  result: ValidationResult
+  result: ValidationResult | null
   current_text: string
   blocked: boolean
+}
+
+// ─────────────────────────────────────────────────────────────
+// End-To-End Pipeline Execution (Phase 4)
+// ─────────────────────────────────────────────────────────────
+
+export interface LLMConfig {
+  provider: string
+  model: string
+  api_key?: string
+  max_tokens: number
+  temperature: number
+}
+
+export interface EndToEndRunRequest {
+  text: string
+  input_guardrails: Guardrail[]
+  output_guardrails: Guardrail[]
+  llm_config: LLMConfig
+  mode: 'run_all' | 'short_circuit'
+}
+
+export interface EndToEndRunResult {
+  input_text: string
+  llm_request_text?: string
+  llm_response_text?: string
+  output_text: string
+  input_results: ValidationResult[]
+  output_results: ValidationResult[]
+  blocked: boolean
+  total_time_ms: number
+}
+
+export interface LLMGenerationEvent {
+  stage: 'llm'
+  status: 'generating' | 'success' | 'fail'
+  content?: string
+  error?: string
 }

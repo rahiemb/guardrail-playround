@@ -1,10 +1,14 @@
 """Guardrail Engine — main FastAPI application entry point."""
 
+from dotenv import load_dotenv, find_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from guardrail_engine.api.routes import router
 from guardrail_engine.api.websocket import ws_router
+
+# Load environment variables from .env
+load_dotenv(find_dotenv(usecwd=True), override=True)
 
 app = FastAPI(
     title="Guardrail Engine",

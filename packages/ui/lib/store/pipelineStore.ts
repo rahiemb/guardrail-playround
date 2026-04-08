@@ -18,7 +18,8 @@ import type {
   OutputNodeData,
   PipelineRunResult,
 } from '../types'
-import { runPipeline as apiRunPipeline } from '../api/client'
+import { runPipeline as apiRunPipeline, streamEndToEnd } from '../api/client'
+import type { EndToEndRunRequest, LLMConfig } from '../types'
 
 // ─────────────────────────────────────────────
 // Defaults
@@ -116,7 +117,15 @@ const STORAGE_KEY = 'guardrail-playground-pipeline'
 
 function persist(nodes: Node[], edges: Edge[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }))
+    // Strip api_key from llmNode data before saving
+    const storableNodes = nodes.map(n => {
+      if (n.type === 'llmNode' && typeof n.data === 'object' && n.data !== null) {
+        const { api_key, ...restData } = n.data as any
+        return { ...n, data: restData }
+      }
+      return n
+    })
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes: storableNodes, edges }))
   } catch {
     // ignore quota errors
   }
@@ -322,31 +331,80 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       .map((n) => (n.data as unknown as GuardrailNodeData).guardrail)
       .filter((g) => g.enabled)
 
-    if (guardrails.length === 0) return
+    // Separate input vs output guardrails by their connection relative to LLM Node
+    // Wait, the edges define the order, but for simplicity we can assume nodes before LLM are input, after are output.
+    // Let's do a simple topographical sort or simply find all edges connected to LLM.
+    const inEdgesToLlm = state.edges.filter(e => e.target === 'llm').map(e => e.source)
+    const outEdgesFromLlm = state.edges.filter(e => e.source === 'llm').map(e => e.target)
+
+    const llmNode = state.nodes.find(n => n.type === 'llmNode')
+    const llmData = (llmNode?.data as unknown as LLMNodeData)
+    const llmConfig: LLMConfig = {
+      provider: llmData?.provider || 'openai',
+      model: llmData?.model || 'gpt-4o',
+      api_key: llmData?.api_key,
+      max_tokens: llmData?.max_tokens ?? 1024,
+      temperature: llmData?.temperature ?? 0.5
+    }
 
     set({ isRunning: true, runError: null, lastRunResult: null })
     guardrailNodes.forEach((n) => get().updateGuardrailStatus(n.id, 'idle'))
-    guardrailNodes.forEach((n) => get().updateGuardrailStatus(n.id, 'running'))
+    
+    // Also reset LLM Node status!
+    if (llmNode) {
+      get().updateNodeData(llmNode.id, { status: 'idle' })
+    }
+
+    // Since our edges are simple chains, we will just pass all guardrails as input_guardrails for now
+    // UNLESS we explicitly track their place. We can just trust the `state.nodes` array order for now.
+    const inputGuardrails = guardrails.filter(g => g.position === 'input' || g.position === 'both')
+    const outputGuardrails = guardrails.filter(g => g.position === 'output')
+
+    const request: EndToEndRunRequest = {
+      text: input,
+      input_guardrails: inputGuardrails,
+      output_guardrails: outputGuardrails,
+      llm_config: llmConfig,
+      mode: 'run_all'
+    }
 
     try {
-      const result = await apiRunPipeline(input, guardrails, 'run_all')
-
-      for (let i = 0; i < result.results.length; i++) {
-        const vr = result.results[i]
-        const node = guardrailNodes.find((n) => {
-          const d = n.data as unknown as GuardrailNodeData
-          return d.guardrail.id === vr.guardrail_id
-        })
-        if (node) {
-          await new Promise((r) => setTimeout(r, 300 + i * 150))
-          get().updateGuardrailStatus(node.id, vr.status)
-        }
+      const outputNode = state.nodes.find(n => n.type === 'outputNode')
+      if (outputNode) {
+        get().updateNodeData(outputNode.id, { content: undefined })
       }
 
-      set({ isRunning: false, lastRunResult: result })
+      await streamEndToEnd(request, (event) => {
+        if (event.stage === 'llm') {
+           const e = event as any;
+           if (llmNode) {
+             get().updateNodeData(llmNode.id, { status: e.status, content: e.content, error: e.error })
+           }
+           if (outputNode && e.content) {
+             get().updateNodeData(outputNode.id, { content: e.content })
+           }
+        } else {
+           const e = event as any;
+           const node = guardrailNodes.find((n) => {
+             const d = n.data as unknown as GuardrailNodeData
+             return d.guardrail.id === e.guardrail_id
+           })
+           if (node) {
+             get().updateGuardrailStatus(node.id, e.result?.status || 'fail')
+           }
+           if (outputNode && e.current_text) {
+             get().updateNodeData(outputNode.id, { content: e.current_text })
+           }
+        }
+      })
+      set({ isRunning: false })
+      // To properly set lastRunResult we would accumulate events, but for Live Preview we mostly rely on node status
     } catch (err) {
       set({ isRunning: false, runError: (err as Error).message })
       guardrailNodes.forEach((n) => get().updateGuardrailStatus(n.id, 'idle'))
+      if (llmNode) {
+        get().updateNodeData(llmNode.id, { status: 'idle' })
+      }
     }
   },
 
@@ -355,7 +413,14 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   // ── Serialization ─────────────────────────────────────
   serializePipeline: () => {
     const { nodes, edges } = get()
-    return JSON.stringify({ nodes, edges }, null, 2)
+    const storableNodes = nodes.map(n => {
+      if (n.type === 'llmNode' && typeof n.data === 'object' && n.data !== null) {
+        const { api_key, ...restData } = n.data as any
+        return { ...n, data: restData }
+      }
+      return n
+    })
+    return JSON.stringify({ nodes: storableNodes, edges }, null, 2)
   },
 
   deserializePipeline: (json) => {

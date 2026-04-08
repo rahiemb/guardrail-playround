@@ -6,12 +6,16 @@ import time
 from collections.abc import AsyncGenerator
 
 from guardrail_engine.pipeline.models import (
+    EndToEndRunRequest,
+    EndToEndRunResult,
     Guardrail,
     GuardrailType,
+    LLMGenerationEvent,
     PipelineRunResult,
     PipelineStageEvent,
     ValidationResult,
 )
+from guardrail_engine.llm.provider import LLMProvider
 from guardrail_engine.validators.base import BaseValidator
 from guardrail_engine.validators.format import FormatValidator
 from guardrail_engine.validators.keyword import KeywordValidator
@@ -132,3 +136,99 @@ class PipelineExecutor:
 
             if blocked and mode == "short_circuit":
                 break
+
+    async def run_end_to_end(self, request: EndToEndRunRequest) -> EndToEndRunResult:
+        """Run text through input guardrails -> LLM -> output guardrails sequentially."""
+        pipeline_start = time.perf_counter()
+        
+        # 1. Input Validation
+        input_run = self.run(request.text, request.input_guardrails, request.mode)
+        
+        if input_run.blocked and request.mode == "short_circuit":
+            total_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
+            return EndToEndRunResult(
+                input_text=request.text,
+                llm_request_text=None,
+                llm_response_text=None,
+                output_text=input_run.output_text,
+                input_results=input_run.results,
+                output_results=[],
+                blocked=True,
+                total_time_ms=total_ms,
+            )
+            
+        # 2. LLM Generation
+        llm = LLMProvider()
+        llm_request_text = input_run.output_text
+        try:
+            llm_response_text = await llm.generate_async(llm_request_text, request.llm_config)
+        except Exception as e:
+            # Handle fail at generation level
+            total_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
+            error_res = ValidationResult(
+                guardrail_id="llm-error",
+                guardrail_name="LLM Generation Error",
+                status="fail",
+                message=str(e),
+            )
+            return EndToEndRunResult(
+                input_text=request.text,
+                llm_request_text=llm_request_text,
+                llm_response_text=None,
+                output_text=llm_request_text,
+                input_results=input_run.results,
+                output_results=[error_res],
+                blocked=True,
+                total_time_ms=total_ms,
+            )
+            
+        # 3. Output Validation
+        output_run = self.run(llm_response_text, request.output_guardrails, request.mode)
+        
+        total_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
+        return EndToEndRunResult(
+            input_text=request.text,
+            llm_request_text=llm_request_text,
+            llm_response_text=llm_response_text,
+            output_text=output_run.output_text,
+            input_results=input_run.results,
+            output_results=output_run.results,
+            blocked=output_run.blocked,
+            total_time_ms=total_ms,
+        )
+
+    async def stream_end_to_end(
+        self, request: EndToEndRunRequest
+    ) -> AsyncGenerator[PipelineStageEvent | LLMGenerationEvent, None]:
+        """Stream real-time events for input guardrails -> LLM generation -> output guardrails."""
+        
+        # 1. Input Guardrails
+        blocked = False
+        current_text = request.text
+        
+        async for event in self.stream(request.text, request.input_guardrails, request.mode):
+            yield event
+            if getattr(event, "blocked", False):
+                blocked = True
+            if getattr(event, "current_text", None):
+                current_text = getattr(event, "current_text")
+
+        if blocked and request.mode == "short_circuit":
+            return
+            
+        # 2. LLM Generation
+        yield LLMGenerationEvent(status="generating")
+        llm = LLMProvider()
+        try:
+            llm_response_text = await llm.generate_async(current_text, request.llm_config)
+            yield LLMGenerationEvent(status="success", content=llm_response_text)
+        except Exception as e:
+            yield LLMGenerationEvent(status="fail", error=str(e))
+            return
+            
+        # 3. Output Guardrails
+        # Offset stage indices by length of input guardrails + 1 (for LLM)
+        offset = len(request.input_guardrails) + 1
+        async for event in self.stream(llm_response_text, request.output_guardrails, request.mode):
+            event.stage += offset
+            yield event

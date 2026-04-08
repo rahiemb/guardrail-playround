@@ -11,6 +11,9 @@ import type {
   PipelineStageEvent,
   ValidateRequest,
   ValidateResponse,
+  EndToEndRunRequest,
+  EndToEndRunResult,
+  LLMGenerationEvent,
 } from '../types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -87,7 +90,7 @@ export function streamPipeline(
         resolve()
         return
       }
-      if (data.error) {
+      if (data.error && (data as any).stage === undefined) {
         ws.close()
         reject(new Error(data.error))
         return
@@ -97,5 +100,49 @@ export function streamPipeline(
 
     ws.onerror = () => reject(new Error('WebSocket connection error'))
     ws.onclose = () => resolve()
+  })
+}
+
+/**
+ * Stream a full end-to-end pipeline run over WebSocket.
+ */
+export function streamEndToEnd(
+  request: EndToEndRunRequest,
+  onEvent: (event: PipelineStageEvent | LLMGenerationEvent) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(`${WS_URL}/api/pipeline/stream_full`)
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify(request))
+    }
+
+    ws.onmessage = (e) => {
+      const data = JSON.parse(e.data as string) as (PipelineStageEvent | LLMGenerationEvent) & { done?: boolean; error?: string }
+      if (data.done) {
+        ws.close()
+        resolve()
+        return
+      }
+      if (data.error && (data as any).stage === undefined) {
+        ws.close()
+        reject(new Error(data.error))
+        return
+      }
+      onEvent(data)
+    }
+
+    ws.onerror = () => reject(new Error('WebSocket connection error'))
+    ws.onclose = () => resolve()
+  })
+}
+
+/** Run the full end-to-end pipeline synchronously. */
+export async function runEndToEndPipeline(
+  request: EndToEndRunRequest
+): Promise<EndToEndRunResult> {
+  return apiFetch<EndToEndRunResult>('/api/pipeline/execute_full', {
+    method: 'POST',
+    body: JSON.stringify(request),
   })
 }

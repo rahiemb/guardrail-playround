@@ -59,7 +59,7 @@ export default function InspectorPanel() {
               <InputConfigForm nodeId={selectedNode.id} data={selectedNode.data as unknown as InputNodeData} />
             )}
             {selectedNode.type === 'llmNode' && (
-              <LLMConfigForm data={selectedNode.data as unknown as LLMNodeData} />
+              <LLMConfigForm nodeId={selectedNode.id} data={selectedNode.data as unknown as LLMNodeData} />
             )}
             {selectedNode.type === 'outputNode' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

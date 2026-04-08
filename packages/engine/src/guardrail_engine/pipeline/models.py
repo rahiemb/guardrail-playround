@@ -127,6 +127,44 @@ class PipelineRunResult(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────
+# End-to-End I/O (Phase 4)
+# ─────────────────────────────────────────────────────────────
+
+
+class LLMConfig(BaseModel):
+    """Configuration for LiteLLM generation."""
+
+    provider: str
+    model: str
+    api_key: str | None = None
+    max_tokens: int = 1024
+    temperature: float = 0.5
+
+
+class EndToEndRunRequest(BaseModel):
+    """Run text through input guardrails -> LLM -> output guardrails."""
+
+    text: str
+    input_guardrails: list[Guardrail]
+    output_guardrails: list[Guardrail]
+    llm_config: LLMConfig
+    mode: str = Field(default="run_all", pattern="^(run_all|short_circuit)$")
+
+
+class EndToEndRunResult(BaseModel):
+    """Full end-to-end execution result."""
+
+    input_text: str
+    llm_request_text: str | None = None
+    llm_response_text: str | None = None
+    output_text: str
+    input_results: list[ValidationResult]
+    output_results: list[ValidationResult]
+    blocked: bool
+    total_time_ms: float
+
+
+# ─────────────────────────────────────────────────────────────
 # WebSocket streaming event
 # ─────────────────────────────────────────────────────────────
 
@@ -136,6 +174,14 @@ class PipelineStageEvent(BaseModel):
 
     stage: int
     guardrail_id: str
-    result: ValidationResult
+    result: ValidationResult | None = None
     current_text: str
     blocked: bool
+
+class LLMGenerationEvent(BaseModel):
+    """Emitted over WebSocket while LLM is generating or starts generating."""
+
+    stage: str = "llm"
+    status: str = "generating"
+    content: str | None = None
+    error: str | None = None

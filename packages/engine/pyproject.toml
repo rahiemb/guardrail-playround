@@ -1,25 +1,27 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools==68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "guardrail-engine"
 version = "0.1.0"
 description = "Guardrail validation engine for LLM applications"
-requires-python = ">=3.12"
+requires-python = "==3.14.*"
 dependencies = [
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.34.0",
-    "pydantic>=2.10.0",
-    "python-dotenv>=1.0.0",
+    "fastapi==0.135.3",
+    "uvicorn[standard]==0.44.0",
+    "pydantic==2.12.5",
+    "python-dotenv==1.0.1",
+    "litellm==1.83.4",
+    "aiohttp==3.13.5",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.25.0",
-    "httpx>=0.28.0",
-    "ruff>=0.9.0",
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+    "httpx==0.28.1",
+    "ruff==0.15.9",
 ]
 
 [tool.setuptools.packages.find]

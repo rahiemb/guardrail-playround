@@ -6,6 +6,7 @@ import Header from '@/components/common/Header'
 import GuardrailPalette from '@/components/sidebar/GuardrailPalette'
 import InspectorPanel from '@/components/inspector/InspectorPanel'
 import TestPanel from '@/components/testing/TestPanel'
+import TestSuitePanel from '@/components/testing/TestSuitePanel'
 
 // React Flow must be dynamically imported (no SSR) because it uses browser APIs
 const FlowCanvas = dynamic(() => import('@/components/canvas/FlowCanvas'), {
@@ -31,7 +32,7 @@ const FlowCanvas = dynamic(() => import('@/components/canvas/FlowCanvas'), {
 })
 
 export default function Home() {
-  const [mode, setMode] = useState<'inspect' | 'test'>('inspect')
+  const [mode, setMode] = useState<'inspect' | 'test' | 'suite'>('inspect')
 
   return (
     <div
@@ -73,6 +74,7 @@ export default function Home() {
           [
             { key: 'inspect', label: '🔍 Inspector', id: 'mode-inspect-btn' },
             { key: 'test', label: '🧪 Test', id: 'mode-test-btn' },
+            { key: 'suite', label: '📊 Suite', id: 'mode-suite-btn' },
           ] as const
         ).map(({ key, label, id }) => (
           <button
@@ -111,7 +113,9 @@ export default function Home() {
           <FlowCanvas />
         </main>
 
-        {mode === 'inspect' ? <InspectorPanel /> : <TestPanel />}
+        {mode === 'inspect' && <InspectorPanel />}
+        {mode === 'test' && <TestPanel />}
+        {mode === 'suite' && <TestSuitePanel />}
       </div>
     </div>
   )

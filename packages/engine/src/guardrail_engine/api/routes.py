@@ -7,6 +7,8 @@ from pydantic import BaseModel
 
 from guardrail_engine.pipeline.executor import PipelineExecutor
 from guardrail_engine.pipeline.models import (
+    EndToEndRunRequest,
+    EndToEndRunResult,
     PipelineRunRequest,
     PipelineRunResult,
     ValidateRequest,
@@ -148,3 +150,8 @@ async def run_pipeline(request: PipelineRunRequest) -> PipelineRunResult:
             total_time_ms=0.0,
         )
     return _executor.run(request.text, request.guardrails, request.mode)
+
+@router.post("/pipeline/execute_full", response_model=EndToEndRunResult, tags=["pipeline"])
+async def execute_end_to_end(request: EndToEndRunRequest) -> EndToEndRunResult:
+    """Run text through input guardrails -> LLM -> output guardrails sequentially."""
+    return await _executor.run_end_to_end(request)

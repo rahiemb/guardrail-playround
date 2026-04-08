@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePipelineStore } from '@/lib/store/pipelineStore'
 
 export default function Header() {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   const [isDark, setIsDark] = useState(true)
   const { isRunning, nodes, runPipeline, resetPipeline } = usePipelineStore()
   const hasGuardrails = nodes.some((n) => n.type === 'guardrailNode')
@@ -58,16 +64,16 @@ export default function Header() {
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
         <button
           id="run-pipeline-btn"
-          disabled={isRunning || !hasGuardrails}
+          disabled={!isMounted || isRunning || !hasGuardrails}
           onClick={() => runPipeline()}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px',
             background: isRunning ? 'rgba(99,102,241,0.4)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
             border: 'none', borderRadius: 'var(--radius-sm)', color: '#fff',
             fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600,
-            cursor: isRunning || !hasGuardrails ? 'not-allowed' : 'pointer',
-            opacity: hasGuardrails ? 1 : 0.5,
-            boxShadow: hasGuardrails ? '0 2px 8px rgba(99,102,241,0.4)' : 'none',
+            cursor: !isMounted || isRunning || !hasGuardrails ? 'not-allowed' : 'pointer',
+            opacity: isMounted && hasGuardrails ? 1 : 0.5,
+            boxShadow: isMounted && hasGuardrails ? '0 2px 8px rgba(99,102,241,0.4)' : 'none',
             transition: 'all 0.15s',
           }}
         >
