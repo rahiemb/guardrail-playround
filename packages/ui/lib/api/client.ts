@@ -65,43 +65,6 @@ export async function runPipeline(
   })
 }
 
-/**
- * Stream a pipeline run over WebSocket.
- * `onEvent` is called for each stage result; resolves when the stream is done.
- */
-export function streamPipeline(
-  text: string,
-  guardrails: Guardrail[],
-  mode: 'run_all' | 'short_circuit' = 'run_all',
-  onEvent: (event: PipelineStageEvent) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(`${WS_URL}/api/pipeline/stream`)
-
-    ws.onopen = () => {
-      const payload: PipelineRunRequest = { text, guardrails, mode }
-      ws.send(JSON.stringify(payload))
-    }
-
-    ws.onmessage = (e) => {
-      const data = JSON.parse(e.data as string) as PipelineStageEvent & { done?: boolean; error?: string }
-      if (data.done) {
-        ws.close()
-        resolve()
-        return
-      }
-      if (data.error && (data as any).stage === undefined) {
-        ws.close()
-        reject(new Error(data.error))
-        return
-      }
-      onEvent(data)
-    }
-
-    ws.onerror = () => reject(new Error('WebSocket connection error'))
-    ws.onclose = () => resolve()
-  })
-}
 
 /**
  * Stream a full end-to-end pipeline run over WebSocket.

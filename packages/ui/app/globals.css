@@ -55,6 +55,17 @@
   --radius-xl:          20px;
 }
 
+html:not(.dark) {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f0f4f8;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-dim: #94a3b8;
+}
+
 /* ═══════════════════════════════════════════════════════
    BASE
 ═══════════════════════════════════════════════════════ */

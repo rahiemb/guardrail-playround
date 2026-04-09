@@ -114,17 +114,27 @@ const INITIAL_EDGES: Edge[] = [
 // ─────────────────────────────────────────────
 
 const STORAGE_KEY = 'guardrail-playground-pipeline'
+const VERSIONS_KEY = 'guardrail-playground-versions'
+const MAX_VERSIONS = 10
+
+export interface PipelineVersion {
+  timestamp: number
+  label: string
+  nodes: Node[]
+  edges: Edge[]
+}
+
+function stripApiKey(nodes: Node[]): Node[] {
+  return nodes.map(n => {
+    if (n.type !== 'llmNode' || typeof n.data !== 'object' || n.data === null) return n
+    const { api_key, ...restData } = n.data as any
+    return { ...n, data: restData }
+  })
+}
 
 function persist(nodes: Node[], edges: Edge[]) {
   try {
-    // Strip api_key from llmNode data before saving
-    const storableNodes = nodes.map(n => {
-      if (n.type === 'llmNode' && typeof n.data === 'object' && n.data !== null) {
-        const { api_key, ...restData } = n.data as any
-        return { ...n, data: restData }
-      }
-      return n
-    })
+    const storableNodes = stripApiKey(nodes)
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes: storableNodes, edges }))
   } catch {
     // ignore quota errors
@@ -139,6 +149,25 @@ function hydrate(): { nodes: Node[]; edges: Edge[] } | null {
     return JSON.parse(raw) as { nodes: Node[]; edges: Edge[] }
   } catch {
     return null
+  }
+}
+
+function loadVersions(): PipelineVersion[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(VERSIONS_KEY)
+    if (!raw) return []
+    return JSON.parse(raw) as PipelineVersion[]
+  } catch {
+    return []
+  }
+}
+
+function persistVersions(versions: PipelineVersion[]) {
+  try {
+    localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions))
+  } catch {
+    // ignore quota errors
   }
 }
 
@@ -177,6 +206,11 @@ interface PipelineState {
   serializePipeline:   () => string
   deserializePipeline: (json: string) => void
   resetPipeline:       () => void
+
+  // Versioning
+  versions:     PipelineVersion[]
+  saveVersion:  (label?: string) => void
+  loadVersion:  (index: number) => void
 }
 
 // ─────────────────────────────────────────────
@@ -192,6 +226,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   isRunning:      false,
   lastRunResult:  null,
   runError:       null,
+  versions:       loadVersions(),
 
   // ── React Flow handlers ──────────────────────────────
   onNodesChange: (changes) =>
@@ -326,14 +361,14 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
     if (!input.trim()) return
 
+    // Auto-save a version before every run
+    get().saveVersion('Auto-save before run')
+
     const guardrailNodes = state.nodes.filter((n) => n.type === 'guardrailNode')
     const guardrails = guardrailNodes
       .map((n) => (n.data as unknown as GuardrailNodeData).guardrail)
       .filter((g) => g.enabled)
 
-    // Separate input vs output guardrails by their connection relative to LLM Node
-    // Wait, the edges define the order, but for simplicity we can assume nodes before LLM are input, after are output.
-    // Let's do a simple topographical sort or simply find all edges connected to LLM.
     const inEdgesToLlm = state.edges.filter(e => e.target === 'llm').map(e => e.source)
     const outEdgesFromLlm = state.edges.filter(e => e.source === 'llm').map(e => e.target)
 
@@ -355,8 +390,6 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       get().updateNodeData(llmNode.id, { status: 'idle' })
     }
 
-    // Since our edges are simple chains, we will just pass all guardrails as input_guardrails for now
-    // UNLESS we explicitly track their place. We can just trust the `state.nodes` array order for now.
     const inputGuardrails = guardrails.filter(g => g.position === 'input' || g.position === 'both')
     const outputGuardrails = guardrails.filter(g => g.position === 'output')
 
@@ -376,24 +409,22 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
       await streamEndToEnd(request, (event) => {
         if (event.stage === 'llm') {
-           const e = event as any;
            if (llmNode) {
-             get().updateNodeData(llmNode.id, { status: e.status, content: e.content, error: e.error })
+             get().updateNodeData(llmNode.id, { status: event.status, content: event.content, error: event.error })
            }
-           if (outputNode && e.content) {
-             get().updateNodeData(outputNode.id, { content: e.content })
+           if (outputNode && event.content) {
+             get().updateNodeData(outputNode.id, { content: event.content })
            }
         } else {
-           const e = event as any;
            const node = guardrailNodes.find((n) => {
              const d = n.data as unknown as GuardrailNodeData
-             return d.guardrail.id === e.guardrail_id
+             return d.guardrail.id === event.guardrail_id
            })
            if (node) {
-             get().updateGuardrailStatus(node.id, e.result?.status || 'fail')
+             get().updateGuardrailStatus(node.id, event.result?.status || 'fail')
            }
-           if (outputNode && e.current_text) {
-             get().updateNodeData(outputNode.id, { content: e.current_text })
+           if (outputNode && event.current_text) {
+             get().updateNodeData(outputNode.id, { content: event.current_text })
            }
         }
       })
@@ -413,13 +444,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   // ── Serialization ─────────────────────────────────────
   serializePipeline: () => {
     const { nodes, edges } = get()
-    const storableNodes = nodes.map(n => {
-      if (n.type === 'llmNode' && typeof n.data === 'object' && n.data !== null) {
-        const { api_key, ...restData } = n.data as any
-        return { ...n, data: restData }
-      }
-      return n
-    })
+    const storableNodes = stripApiKey(nodes)
     return JSON.stringify({ nodes: storableNodes, edges }, null, 2)
   },
 
@@ -436,5 +461,27 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   resetPipeline: () => {
     persist(INITIAL_NODES, INITIAL_EDGES)
     set({ nodes: INITIAL_NODES, edges: INITIAL_EDGES, selectedNodeId: null, lastRunResult: null })
+  },
+
+  // ── Versioning ────────────────────────────────────────
+  saveVersion: (label = 'Manual save') => {
+    const { nodes, edges } = get()
+    const storableNodes = stripApiKey(nodes)
+    const snapshot: PipelineVersion = {
+      timestamp: Date.now(),
+      label,
+      nodes: storableNodes,
+      edges,
+    }
+    const updated = [snapshot, ...get().versions].slice(0, MAX_VERSIONS)
+    persistVersions(updated)
+    set({ versions: updated })
+  },
+
+  loadVersion: (index) => {
+    const version = get().versions[index]
+    if (!version) return
+    persist(version.nodes, version.edges)
+    set({ nodes: version.nodes, edges: version.edges, selectedNodeId: null })
   },
 }))

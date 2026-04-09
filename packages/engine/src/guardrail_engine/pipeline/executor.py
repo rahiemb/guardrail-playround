@@ -141,7 +141,6 @@ class PipelineExecutor:
         """Run text through input guardrails -> LLM -> output guardrails sequentially."""
         pipeline_start = time.perf_counter()
         
-        # 1. Input Validation
         input_run = self.run(request.text, request.input_guardrails, request.mode)
         
         if input_run.blocked and request.mode == "short_circuit":
@@ -157,7 +156,6 @@ class PipelineExecutor:
                 total_time_ms=total_ms,
             )
             
-        # 2. LLM Generation
         llm = LLMProvider()
         llm_request_text = input_run.output_text
         try:
@@ -182,7 +180,6 @@ class PipelineExecutor:
                 total_time_ms=total_ms,
             )
             
-        # 3. Output Validation
         output_run = self.run(llm_response_text, request.output_guardrails, request.mode)
         
         total_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
@@ -202,7 +199,6 @@ class PipelineExecutor:
     ) -> AsyncGenerator[PipelineStageEvent | LLMGenerationEvent, None]:
         """Stream real-time events for input guardrails -> LLM generation -> output guardrails."""
         
-        # 1. Input Guardrails
         blocked = False
         current_text = request.text
         
@@ -216,7 +212,6 @@ class PipelineExecutor:
         if blocked and request.mode == "short_circuit":
             return
             
-        # 2. LLM Generation
         yield LLMGenerationEvent(status="generating")
         llm = LLMProvider()
         try:
@@ -226,7 +221,6 @@ class PipelineExecutor:
             yield LLMGenerationEvent(status="fail", error=str(e))
             return
             
-        # 3. Output Guardrails
         # Offset stage indices by length of input guardrails + 1 (for LLM)
         offset = len(request.input_guardrails) + 1
         async for event in self.stream(llm_response_text, request.output_guardrails, request.mode):
