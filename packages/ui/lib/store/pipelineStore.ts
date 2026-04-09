@@ -19,7 +19,8 @@ import type {
   PipelineRunResult,
 } from '../types'
 import { runPipeline as apiRunPipeline, streamEndToEnd } from '../api/client'
-import type { EndToEndRunRequest, LLMConfig } from '../types'
+import type { EndToEndRunRequest, LLMConfig, ValidationResult } from '../types'
+import { useAnalyticsStore } from './analyticsStore'
 
 // ─────────────────────────────────────────────
 // Defaults
@@ -401,6 +402,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       mode: 'run_all'
     }
 
+    const startTime = performance.now()
+
     try {
       const outputNode = state.nodes.find(n => n.type === 'outputNode')
       if (outputNode) {
@@ -428,7 +431,40 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
            }
         }
       })
+      
+      const endTime = performance.now()
       set({ isRunning: false })
+      
+      // Accumulate the final statuses from nodes for analytics
+      const endStateNodes = get().nodes
+      const results: ValidationResult[] = []
+      let anyBlocked = false
+      
+      for (const n of endStateNodes) {
+        if (n.type === 'guardrailNode') {
+           const d = n.data as unknown as GuardrailNodeData
+           if (d.guardrail.enabled) {
+              results.push({
+                 guardrail_id: d.guardrail.id,
+                 guardrail_name: d.guardrail.name,
+                 status: d.status || 'idle',
+                 message: '',
+                 metadata: {},
+                 execution_time_ms: 0
+              })
+              if (d.status === 'fail' && d.guardrail.action === 'block') {
+                 anyBlocked = true
+              }
+           }
+        }
+      }
+      
+      useAnalyticsStore.getState().recordRun({
+        totalTimeMs: endTime - startTime,
+        blocked: anyBlocked,
+        guardrailResults: results
+      })
+      
       // To properly set lastRunResult we would accumulate events, but for Live Preview we mostly rely on node status
     } catch (err) {
       set({ isRunning: false, runError: (err as Error).message })

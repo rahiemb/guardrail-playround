@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePipelineStore } from '@/lib/store/pipelineStore'
 import Link from 'next/link'
+import ExportModal from '@/components/canvas/ExportModal'
 
 export default function Header() {
   const [isMounted, setIsMounted] = useState(false)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -124,12 +126,47 @@ export default function Header() {
         >
           📚 Catalog
         </Link>
+        <Link
+          href="/analytics"
+          id="nav-analytics"
+          style={navLinkStyle}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-muted)'; e.currentTarget.style.color = 'var(--color-text)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
+        >
+          📈 Analytics
+        </Link>
+        <Link
+          href="/ab-testing"
+          id="nav-ab-testing"
+          style={navLinkStyle}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-muted)'; e.currentTarget.style.color = 'var(--color-text)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
+        >
+          ⚖️ A/B Test
+        </Link>
       </div>
 
       {/* Right actions */}
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
 
-        {/* Export */}
+        {/* Integration Export */}
+        <button
+          id="integration-export-btn"
+          title="Export integration code"
+          onClick={() => setIsExportModalOpen(true)}
+          style={{
+            padding: '5px 10px', background: 'transparent',
+            border: '1px solid var(--color-border)', borderRadius: 6,
+            color: 'var(--color-text-muted)', fontFamily: 'var(--font-sans)', fontSize: 11, cursor: 'pointer',
+            transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 5,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-muted)'; e.currentTarget.style.color = 'var(--color-text)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
+        >
+          </> Code
+        </button>
+
+        {/* JSON Export */}
         <button
           id="export-pipeline-btn"
           title="Export pipeline as .guardrail.json"
@@ -143,7 +180,7 @@ export default function Header() {
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-muted)'; e.currentTarget.style.color = 'var(--color-text)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
         >
-          ↓ Export
+          ↓ JSON
         </button>
 
         {/* Import */}
@@ -227,6 +264,10 @@ export default function Header() {
           {isDark ? '☀️' : '🌙'}
         </button>
       </div>
+
+      {isExportModalOpen && (
+        <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
+      )}
     </header>
   )
 }
