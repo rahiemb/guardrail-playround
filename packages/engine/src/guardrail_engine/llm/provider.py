@@ -24,7 +24,7 @@ class LLMProvider:
     async def generate_async(self, prompt: str, config: LLMConfig) -> str:
         """Generate text asynchronously using LiteLLM."""
 
-        # Assemble model string. If provider is given and not openai, LiteLLM prefers 'provider/model'
+        # Assemble model string. For non-OpenAI, LiteLLM prefers 'provider/model'
         mode_str = config.model
         if config.provider and config.provider.lower() != "openai" and "/" not in mode_str:
             mode_str = f"{config.provider}/{config.model}"
