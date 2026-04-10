@@ -39,7 +39,7 @@ export default function LLMConfigForm({ nodeId, data }: Props) {
 
   const models = MODELS[data.provider] ?? []
 
-  const handleChange = (key: keyof LLMNodeData, value: any) => {
+  const handleChange = (key: keyof LLMNodeData, value: string | number) => {
     updateNodeData(nodeId, { [key]: value })
   }
 

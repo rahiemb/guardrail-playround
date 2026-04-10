@@ -18,7 +18,7 @@ import type {
   OutputNodeData,
   PipelineRunResult,
 } from '../types'
-import { runPipeline as apiRunPipeline, streamEndToEnd } from '../api/client'
+import { streamEndToEnd } from '../api/client'
 import type { EndToEndRunRequest, LLMConfig, ValidationResult } from '../types'
 import { useAnalyticsStore } from './analyticsStore'
 
@@ -128,7 +128,8 @@ export interface PipelineVersion {
 function stripApiKey(nodes: Node[]): Node[] {
   return nodes.map(n => {
     if (n.type !== 'llmNode' || typeof n.data !== 'object' || n.data === null) return n
-    const { api_key, ...restData } = n.data as any
+    const restData = { ...(n.data as Record<string, unknown>) }
+    delete restData.api_key
     return { ...n, data: restData }
   })
 }
@@ -370,8 +371,6 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       .map((n) => (n.data as unknown as GuardrailNodeData).guardrail)
       .filter((g) => g.enabled)
 
-    const inEdgesToLlm = state.edges.filter(e => e.target === 'llm').map(e => e.source)
-    const outEdgesFromLlm = state.edges.filter(e => e.source === 'llm').map(e => e.target)
 
     const llmNode = state.nodes.find(n => n.type === 'llmNode')
     const llmData = (llmNode?.data as unknown as LLMNodeData)
@@ -447,7 +446,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
               results.push({
                  guardrail_id: d.guardrail.id,
                  guardrail_name: d.guardrail.name,
-                 status: d.status || 'idle',
+                 status: (d.status === 'idle' || d.status === 'running' ? 'pass' : d.status) as ValidationResult['status'],
                  message: '',
                  metadata: {},
                  execution_time_ms: 0
@@ -496,7 +495,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
   resetPipeline: () => {
     persist(INITIAL_NODES, INITIAL_EDGES)
-    set({ nodes: INITIAL_NODES, edges: INITIAL_EDGES, selectedNodeId: null, lastRunResult: null })
+    set({ nodes: INITIAL_NODES, edges: INITIAL_EDGES, selectedNodeId: null, lastRunResult: null, isRunning: false })
   },
 
   // ── Versioning ────────────────────────────────────────

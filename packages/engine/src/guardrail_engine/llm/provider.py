@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+
 import litellm
+
 from guardrail_engine.pipeline.models import LLMConfig
 
 _PROVIDER_ENV_KEYS: dict[str, str] = {
@@ -21,7 +23,7 @@ class LLMProvider:
 
     async def generate_async(self, prompt: str, config: LLMConfig) -> str:
         """Generate text asynchronously using LiteLLM."""
-        
+
         # Assemble model string. If provider is given and not openai, LiteLLM prefers 'provider/model'
         mode_str = config.model
         if config.provider and config.provider.lower() != "openai" and "/" not in mode_str:
@@ -33,7 +35,7 @@ class LLMProvider:
             "max_tokens": config.max_tokens,
             "temperature": config.temperature,
         }
-        
+
         # Override API keys at the call level if provided (session keys)
         api_key = config.api_key
         if not api_key and config.provider:
@@ -42,14 +44,14 @@ class LLMProvider:
                 api_key = os.environ.get(env_var)
         if not api_key:
             api_key = os.environ.get("LITELLM_API_KEY")
-        
+
         if api_key:
             kwargs["api_key"] = api_key
 
         base_url = os.environ.get("LITELLM_API_URL") or os.environ.get("LITELLM_BASE_URL")
         if base_url:
             kwargs["base_url"] = base_url
-            
+
         response = await litellm.acompletion(**kwargs)
-        
+
         return response.choices[0].message.content or ""

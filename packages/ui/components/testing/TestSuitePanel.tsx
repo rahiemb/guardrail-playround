@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { usePipelineStore } from '@/lib/store/pipelineStore'
-import { TEST_SUITE, type TestPrompt } from '@/lib/testSuite'
+import { TEST_SUITE } from '@/lib/testSuite'
 import type { EndToEndRunResult } from '@/lib/types'
 import { runEndToEndPipeline } from '@/lib/api/client'
-import type { EndToEndRunRequest, LLMConfig, GuardrailNodeData, OutputNodeData } from '@/lib/types'
+import type { EndToEndRunRequest, LLMConfig, GuardrailNodeData, LLMNodeData } from '@/lib/types'
 
 export default function TestSuitePanel() {
-  const { nodes, edges, updateNodeData } = usePipelineStore()
+  const { nodes } = usePipelineStore()
   
   const [isRunning, setIsRunning] = useState(false)
   const [results, setResults] = useState<Record<string, EndToEndRunResult>>({})
@@ -23,7 +23,7 @@ export default function TestSuitePanel() {
     const outputGuardrails = guardrails.filter(g => g.position === 'output')
     
     const llmNode = nodes.find(n => n.type === 'llmNode')
-    const llmData = (llmNode?.data as any)
+    const llmData = (llmNode?.data as unknown as LLMNodeData)
     const llmConfig: LLMConfig = {
       provider: llmData?.provider || 'openai',
       model: llmData?.model || 'gpt-4o',
@@ -114,7 +114,7 @@ export default function TestSuitePanel() {
                 </span>
               </div>
               <div style={{ fontSize: 10, color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                "{prompt.text}"
+                &quot;{prompt.text}&quot;
               </div>
               
               {isDone && (

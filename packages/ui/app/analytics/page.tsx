@@ -79,11 +79,11 @@ export default function AnalyticsPage() {
                   { label: 'Total Runs', val: stats.totalRuns },
                   { label: 'Passed', val: stats.totalPassed, textClass: 'text-green-400' },
                   { label: 'Blocked', val: stats.totalBlocked, textClass: 'text-red-400' },
-                  { label: 'Avg Latency', val: \`\${Math.round(stats.avgLatency)}ms\` },
+                  { label: 'Avg Latency', val: `${Math.round(stats.avgLatency)}ms` },
                 ].map((k) => (
                   <div key={k.label} className="p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col gap-1 shadow-sm">
                     <span className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{k.label}</span>
-                    <span className={\`text-3xl font-bold font-sans \${k.textClass || 'text-[var(--color-text)]'}\`}>{k.val}</span>
+                    <span className={`text-3xl font-bold font-sans ${k.textClass || 'text-[var(--color-text)]'}`}>{k.val}</span>
                   </div>
                 ))}
               </div>
@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
                         >
                           {
                             [{ color: '#4ade80' }, { color: '#f87171' }].map((entry, index) => (
-                              <Cell key={\`cell-\${index}\`} fill={entry.color} />
+                              <Cell key={`cell-${index}`} fill={entry.color} />
                             ))
                           }
                         </Pie>
@@ -148,7 +148,7 @@ export default function AnalyticsPage() {
                     <LineChart data={stats.latencyTrend} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                       <XAxis dataKey="index" tick={{ fill: 'var(--color-text-dim)', fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={30} />
-                      <YAxis tick={{ fill: 'var(--color-text-dim)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(val) => \`\${val}ms\`} />
+                      <YAxis tick={{ fill: 'var(--color-text-dim)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}ms`} />
                       <Tooltip 
                         cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }} 
                         contentStyle={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', borderRadius: '8px' }}

@@ -33,17 +33,28 @@ function TagInput({ label, tags, onAdd, onRemove, color }: { label: string; tags
 }
 
 export default function TopicForm({ config, onChange }: Props) {
-  const blocked = (config.blocked_topics as string[]) ?? []
-  const allowed = (config.allowed_topics as string[]) ?? []
+  const blockedConfig = (config.blocked_topics as Record<string, string[]>) ?? {}
+  const blocked = Object.keys(blockedConfig)
+
+  const allowedConfig = (config.allowed_topics as Record<string, string[]>) ?? {}
+  const allowed = Object.keys(allowedConfig)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <TagInput label="Blocked topics" tags={blocked} color="#ef4444"
-        onAdd={(t) => onChange({ blocked_topics: [...blocked, t] })}
-        onRemove={(t) => onChange({ blocked_topics: blocked.filter((x) => x !== t) })} />
+        onAdd={(t) => onChange({ blocked_topics: { ...blockedConfig, [t]: [t] } })}
+        onRemove={(t) => {
+          const next = { ...blockedConfig }
+          delete next[t]
+          onChange({ blocked_topics: next })
+        }} />
       <TagInput label="Allowed topics" tags={allowed} color="#10b981"
-        onAdd={(t) => onChange({ allowed_topics: [...allowed, t] })}
-        onRemove={(t) => onChange({ allowed_topics: allowed.filter((x) => x !== t) })} />
+        onAdd={(t) => onChange({ allowed_topics: { ...allowedConfig, [t]: [t] } })}
+        onRemove={(t) => {
+          const next = { ...allowedConfig }
+          delete next[t]
+          onChange({ allowed_topics: next })
+        }} />
     </div>
   )
 }

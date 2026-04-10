@@ -87,7 +87,7 @@ export function streamEndToEnd(
         resolve()
         return
       }
-      if (data.error && (data as any).stage === undefined) {
+      if (data.error && (data as unknown as Record<string, unknown>).stage === undefined) {
         ws.close()
         reject(new Error(data.error))
         return

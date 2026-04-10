@@ -77,7 +77,7 @@ export default function GuardrailConfigForm({ nodeId, guardrail }: Props) {
         <input style={inputStyle} value={guardrail.name} onChange={(e) => update({ name: e.target.value })} />
       </FieldBox>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 10 }}>
         <FieldBox>
           <Label>Action</Label>
           <select style={selectStyle} value={guardrail.action} onChange={(e) => update({ action: e.target.value as GuardrailAction })}>

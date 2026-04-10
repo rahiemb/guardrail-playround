@@ -136,8 +136,8 @@ export const CATALOG: GuardrailCatalogEntry[] = [
       'Keep a coding assistant focused on technical questions',
     ],
     configParams: [
-      { name: 'blocked_topics', type: 'object[]', description: 'Array of {name, keywords[]} objects. Any keyword match blocks the input.' },
-      { name: 'allowed_topics', type: 'object[]', description: 'If set, input must match at least one allowed topic to pass' },
+      { name: 'blocked_topics', type: 'object', description: 'Record mapping topic names to keyword arrays (e.g. { "politics": ["election"] })' },
+      { name: 'allowed_topics', type: 'object', description: 'If set, input must match at least one allowed topic to pass' },
       { name: 'case_sensitive', type: 'boolean', description: 'Whether topic keyword matching is case-sensitive (default: false)' },
     ],
     performanceNote: 'Keyword-based matching. Effectively instant.',

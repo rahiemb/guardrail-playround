@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import AsyncGenerator
 
+from guardrail_engine.llm.provider import LLMProvider
 from guardrail_engine.pipeline.models import (
     EndToEndRunRequest,
     EndToEndRunResult,
@@ -15,7 +16,6 @@ from guardrail_engine.pipeline.models import (
     PipelineStageEvent,
     ValidationResult,
 )
-from guardrail_engine.llm.provider import LLMProvider
 from guardrail_engine.validators.base import BaseValidator
 from guardrail_engine.validators.format import FormatValidator
 from guardrail_engine.validators.keyword import KeywordValidator
@@ -140,9 +140,9 @@ class PipelineExecutor:
     async def run_end_to_end(self, request: EndToEndRunRequest) -> EndToEndRunResult:
         """Run text through input guardrails -> LLM -> output guardrails sequentially."""
         pipeline_start = time.perf_counter()
-        
+
         input_run = self.run(request.text, request.input_guardrails, request.mode)
-        
+
         if input_run.blocked and request.mode == "short_circuit":
             total_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
             return EndToEndRunResult(
@@ -155,7 +155,7 @@ class PipelineExecutor:
                 blocked=True,
                 total_time_ms=total_ms,
             )
-            
+
         llm = LLMProvider()
         llm_request_text = input_run.output_text
         try:
@@ -179,9 +179,9 @@ class PipelineExecutor:
                 blocked=True,
                 total_time_ms=total_ms,
             )
-            
+
         output_run = self.run(llm_response_text, request.output_guardrails, request.mode)
-        
+
         total_ms = round((time.perf_counter() - pipeline_start) * 1000, 2)
         return EndToEndRunResult(
             input_text=request.text,
@@ -198,10 +198,10 @@ class PipelineExecutor:
         self, request: EndToEndRunRequest
     ) -> AsyncGenerator[PipelineStageEvent | LLMGenerationEvent, None]:
         """Stream real-time events for input guardrails -> LLM generation -> output guardrails."""
-        
+
         blocked = False
         current_text = request.text
-        
+
         async for event in self.stream(request.text, request.input_guardrails, request.mode):
             yield event
             if getattr(event, "blocked", False):
@@ -211,7 +211,7 @@ class PipelineExecutor:
 
         if blocked and request.mode == "short_circuit":
             return
-            
+
         yield LLMGenerationEvent(status="generating")
         llm = LLMProvider()
         try:
@@ -220,7 +220,7 @@ class PipelineExecutor:
         except Exception as e:
             yield LLMGenerationEvent(status="fail", error=str(e))
             return
-            
+
         # Offset stage indices by length of input guardrails + 1 (for LLM)
         offset = len(request.input_guardrails) + 1
         async for event in self.stream(llm_response_text, request.output_guardrails, request.mode):

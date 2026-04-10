@@ -113,19 +113,19 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
           <div className="w-48 border-r border-[var(--color-border)] bg-[var(--color-bg)] flex flex-col p-2 gap-1">
             <button
               onClick={() => setLanguage('typescript')}
-              className={\`text-left px-3 py-2 rounded text-[13px] font-sans \${language === 'typescript' ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]'}\`}
+              className={`text-left px-3 py-2 rounded text-[13px] font-sans ${language === 'typescript' ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]'}`}
             >
               TypeScript (Zod)
             </button>
             <button
               onClick={() => setLanguage('python')}
-              className={\`text-left px-3 py-2 rounded text-[13px] font-sans \${language === 'python' ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]'}\`}
+              className={`text-left px-3 py-2 rounded text-[13px] font-sans ${language === 'python' ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]'}`}
             >
               Python (Guardrails AI)
             </button>
             <button
               onClick={() => setLanguage('curl')}
-              className={\`text-left px-3 py-2 rounded text-[13px] font-sans \${language === 'curl' ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]'}\`}
+              className={`text-left px-3 py-2 rounded text-[13px] font-sans ${language === 'curl' ? 'bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]'}`}
             >
               cURL (API Request)
             </button>

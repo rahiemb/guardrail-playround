@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState } from 'react'
 import Header from '@/components/common/Header'
 import { usePipelineStore } from '@/lib/store/pipelineStore'
-import { runPipeline } from '@/lib/api/client'
-import { EndToEndRunRequest, Guardrail } from '@/lib/types'
+import { runEndToEndPipeline } from '@/lib/api/client'
+import { Guardrail } from '@/lib/types'
 
 export default function ABTestingPage() {
-  const { serializePipeline, nodes: currentNodes } = usePipelineStore()
+  const { serializePipeline } = usePipelineStore()
   
   // Start with the current pipeline as Pipeline A.
   const [pipelineAContent, setPipelineAContent] = useState(serializePipeline())
@@ -54,7 +55,7 @@ export default function ABTestingPage() {
     const { inputGuardrails: inputA, outputGuardrails: outputA } = parsePipelineJSON(pipelineAContent)
     const { inputGuardrails: inputB, outputGuardrails: outputB } = parsePipelineJSON(pipelineBContent)
 
-    const llmConfig = { provider: 'openai', model: 'gpt-4o' }
+    const llmConfig = { provider: 'openai', model: 'gpt-4o', max_tokens: 1024, temperature: 0.5 }
     const prompts = promptsText.split('\n').filter(p => p.trim())
     
     setIsRunning(true)
@@ -63,7 +64,7 @@ export default function ABTestingPage() {
 
     for (const text of prompts) {
       try {
-        const resA = await runPipeline({
+        const resA = await runEndToEndPipeline({
            text, input_guardrails: inputA, output_guardrails: outputA, llm_config: llmConfig, mode: 'run_all'
         })
         newResultsA.push({ prompt: text, blocked: resA.blocked, output: resA.output_text, results: [...resA.input_results, ...resA.output_results] })
@@ -72,7 +73,7 @@ export default function ABTestingPage() {
       }
       
       try {
-        const resB = await runPipeline({
+        const resB = await runEndToEndPipeline({
            text, input_guardrails: inputB, output_guardrails: outputB, llm_config: llmConfig, mode: 'run_all'
         })
         newResultsB.push({ prompt: text, blocked: resB.blocked, output: resB.output_text, results: [...resB.input_results, ...resB.output_results] })
@@ -142,7 +143,7 @@ export default function ABTestingPage() {
             <button 
               onClick={runBatchTest}
               disabled={isRunning || !promptsText.trim() || !pipelineAContent || !pipelineBContent}
-              className={\`self-start px-6 py-2 rounded text-white font-medium \${isRunning ? 'bg-indigo-500/50 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md cursor-pointer'}\`}
+              className={`self-start px-6 py-2 rounded text-white font-medium ${isRunning ? 'bg-indigo-500/50 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md cursor-pointer'}`}
             >
               {isRunning ? 'Running Setup...' : 'Run Parallel Batch Test'}
             </button>
@@ -172,7 +173,7 @@ export default function ABTestingPage() {
                              <span className="text-red-400">{resA.error}</span>
                            ) : (
                              <div className="flex flex-col gap-1">
-                               <span className={\`font-semibold \${resA.blocked ? 'text-red-400' : 'text-green-400'}\`}>
+                               <span className={`font-semibold ${resA.blocked ? 'text-red-400' : 'text-green-400'}`}>
                                  {resA.blocked ? 'BLOCKED' : 'PASSED'}
                                </span>
                                <span className="text-[var(--color-text-muted)] italic truncate">{resA.output}</span>
@@ -184,7 +185,7 @@ export default function ABTestingPage() {
                              <span className="text-red-400">{resB.error}</span>
                            ) : resB ? (
                              <div className="flex flex-col gap-1">
-                               <span className={\`font-semibold \${resB.blocked ? 'text-red-400' : 'text-green-400'}\`}>
+                               <span className={`font-semibold ${resB.blocked ? 'text-red-400' : 'text-green-400'}`}>
                                  {resB.blocked ? 'BLOCKED' : 'PASSED'}
                                </span>
                                <span className="text-[var(--color-text-muted)] italic truncate">{resB.output}</span>

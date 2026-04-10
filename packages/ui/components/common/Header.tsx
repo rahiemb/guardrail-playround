@@ -88,7 +88,7 @@ export default function Header() {
         height: 'var(--header-height)', background: 'var(--color-surface)',
         borderBottom: '1px solid var(--color-border)', display: 'flex',
         alignItems: 'center', padding: '0 16px', gap: 10, flexShrink: 0, zIndex: 10,
-        overflow: 'hidden',
+        overflowX: 'auto',
       }}
     >
       {/* Logo */}
@@ -107,7 +107,7 @@ export default function Header() {
       </div>
 
       {/* Nav links */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, flexShrink: 0 }}>
         <Link
           href="/templates"
           id="nav-templates"
@@ -147,7 +147,7 @@ export default function Header() {
       </div>
 
       {/* Right actions */}
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
 
         {/* Integration Export */}
         <button
@@ -163,7 +163,7 @@ export default function Header() {
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-muted)'; e.currentTarget.style.color = 'var(--color-text)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
         >
-          </> Code
+          {"</>"} Code
         </button>
 
         {/* JSON Export */}

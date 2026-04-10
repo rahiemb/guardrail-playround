@@ -44,8 +44,9 @@ function configSummary(type: GuardrailType, config: Record<string, unknown>): st
     case 'toxicity':         return `threshold: ${config.threshold ?? 0.5}`
     case 'prompt_injection': return `sensitivity: ${config.sensitivity ?? 0.75}`
     case 'topic':   {
-      const blocked = (config.blocked_topics as string[] | undefined) ?? []
-      return blocked.length > 0 ? `block: ${blocked.slice(0, 2).join(', ')}` : 'no topics'
+      const blocked = (config.blocked_topics as Record<string, string[]> | undefined) ?? {}
+      const keys = Object.keys(blocked)
+      return keys.length > 0 ? `block: ${keys.slice(0, 2).join(', ')}` : 'no topics'
     }
     case 'format':  return `format: ${config.expected_format ?? 'any'}`
     default:        return 'configured'

@@ -125,7 +125,7 @@ export const ENTERPRISE_SAFE: PipelineTemplate = {
 
 const csGuardrails: Guardrail[] = [
   makeGuardrail('cs-topic', 'Topic Restrictor', 'topic', 'input', 'block', 'high',
-    { blocked_topics: [{ name: 'politics', keywords: ['election', 'vote', 'president', 'congress', 'republican', 'democrat'] }, { name: 'violence', keywords: ['kill', 'bomb', 'attack', 'weapon'] }], allowed_topics: [] }),
+    { blocked_topics: { politics: ['election', 'vote', 'president', 'congress', 'republican', 'democrat'], violence: ['kill', 'bomb', 'attack', 'weapon'] }, allowed_topics: {} }),
   makeGuardrail('cs-pii', 'PII Redaction', 'pii', 'input', 'modify', 'high',
     { entities: ['CREDIT_CARD', 'US_SSN', 'PHONE_NUMBER', 'EMAIL_ADDRESS'], language: 'en' }),
   makeGuardrail('cs-fmt', 'Response Formatter', 'format', 'output', 'warn', 'low',
